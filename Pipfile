@@ -5,6 +5,10 @@ name = "pypi"
 
 [packages]
 pandas = "*"
+django = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
 
 [dev-packages]
 ipykernel = "*"
