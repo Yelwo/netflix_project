@@ -16,9 +16,9 @@ class Genre(models.Model):
         return self.name
         
 
-class ScreenContent(models.Model):
+class ScreenContent(PolymorphicModel):
     title = models.CharField(max_length=30)
-    genres = models.ManyToManyField(Genre, verbose_name="genres")
+    genres = models.ManyToManyField(Genre, verbose_name="content")
 
     @abc.abstractmethod
     def rate():
