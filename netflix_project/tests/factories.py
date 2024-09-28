@@ -20,3 +20,9 @@ class GenreFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.Genre
+
+class ScreenContentFactory(factory.django.DjangoModelFactory):
+    genres = factory.RelatedFactoryList(GenreFactory, 4)
+
+    class Meta:
+        model = models.ScreenContent
