@@ -39,5 +39,30 @@ class TestScreenContent:
         url = reverse('screen-content-list')
         response = client.post(url, data=data, content_type='application/json')
 
-        print(models.Genre.objects.all())
         assert models.Genre.objects.get(name=genre.name)
+    
+    def test_movie_type(self, client, faker, user_profile, genre):
+        data = {
+            'title': faker.name(),
+            'genres': [{'name': genre.name}],
+            'type': 'Movie',
+        }
+
+        client.force_login(user_profile.user)
+        url = reverse('screen-content-list')
+        response = client.post(url, data=data, content_type='application/json')
+
+        assert models.Movie.objects.get(title=data['title'])
+    
+    def test_tv_show_type(self, client, faker, user_profile, genre):
+        data = {
+            'title': faker.name(),
+            'genres': [{'name': genre.name}],
+            'type': 'TV Show',
+        }
+
+        client.force_login(user_profile.user)
+        url = reverse('screen-content-list')
+        response = client.post(url, data=data, content_type='application/json')
+
+        assert models.TVShow.objects.get(title=data['title'])
