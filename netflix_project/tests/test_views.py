@@ -4,6 +4,7 @@ import pytest
 from django.urls import reverse
 
 from screen_content import serializers
+from screen_content import models
 
 
 @pytest.mark.django_db
@@ -25,5 +26,18 @@ class TestScreenContent:
         for created, genre in zip_longest(response.data['genres'], data['genres']):
             assert created['name'] == genre['name']
     
-    def test_genres_are_unique(self, client, faker, user_profile, screen_content):
-        pass
+    def test_genres_are_unique(self, client, faker, user_profile, screen_content_factory, genre):
+        screen_content_factory(genres=[genre])
+        data = {
+            'title': faker.name(),
+            'genres': [{'name': genre.name}],
+            'type': 'Movie',
+        }
+
+
+        client.force_login(user_profile.user)
+        url = reverse('screen-content-list')
+        response = client.post(url, data=data, content_type='application/json')
+
+        print(models.Genre.objects.all())
+        assert models.Genre.objects.get(name=genre.name)

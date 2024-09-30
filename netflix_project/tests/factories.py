@@ -22,7 +22,13 @@ class GenreFactory(factory.django.DjangoModelFactory):
         model = models.Genre
 
 class ScreenContentFactory(factory.django.DjangoModelFactory):
-    genres = factory.RelatedFactoryList(GenreFactory, 4)
+    title = factory.Faker('sentence', nb_words=2)
+
+    @factory.post_generation
+    def genres(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.genres.add(*extracted)
 
     class Meta:
         model = models.ScreenContent
