@@ -41,7 +41,7 @@ class TVShow(ScreenContent):
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile')
     history = models.ManyToManyField(ScreenContent, blank=True)
 
     def __str__(self) -> str:

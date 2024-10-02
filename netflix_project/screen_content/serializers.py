@@ -8,6 +8,14 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ScreenContentSerializer(serializers.ModelSerializer):
+    genres = GenreSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.ScreenContent
+        fields = '__all__'
+
+
 class CreateScreenCotentSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=30)
     genres = GenreSerializer(many=True)
@@ -23,10 +31,24 @@ class CreateScreenCotentSerializer(serializers.Serializer):
         genres = list(existing_genres) + created_genres
 
         if (sc_type := validated_data.pop('type')) == 'Movie':
-            scree_content, _ = models.Movie.objects.get_or_create(**validated_data)
+            screen_content, _ = models.Movie.objects.get_or_create(**validated_data)
         if sc_type == 'TV Show':
-            scree_content, _ = models.TVShow.objects.get_or_create(**validated_data)
-            
-        scree_content.genres.set(genres)
-        return scree_content
+            screen_content, _ = models.TVShow.objects.get_or_create(**validated_data)
 
+        screen_content.genres.set(genres)
+        return screen_content
+
+
+class AddScreenContentToHistorySerializer(serializers.Serializer):
+    screen_content = ScreenContentSerializer(write_only=True)
+
+    def update(self, instance, validated_data):
+        instance.history.add(validated_data['screen_content'])
+        return instance
+
+    def validate(self, attrs):
+        try:
+            attrs['screen_content'] = models.ScreenContent.objects.get(**attrs['screen_content'])
+        except models.ScreenContent.DoesNotExist:
+            raise serializers.ValidationError({'screen_content': ['Invalid title, object does not exist']})
+        return attrs
