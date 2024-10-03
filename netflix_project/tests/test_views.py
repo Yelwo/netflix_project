@@ -66,3 +66,45 @@ class TestScreenContent:
         response = client.post(url, data=data, content_type='application/json')
 
         assert models.TVShow.objects.get(title=data['title'])
+
+
+@pytest.mark.django_db
+class TestUserProfile:
+    def test_add_to_history(self, client, user_profile, screen_content):
+        data = {
+            'screen_content': {'title': screen_content.title}
+        }
+
+        client.force_login(user_profile.user)
+        url = reverse('user-profile-add-to-history', kwargs={'pk': user_profile.pk})
+        response = client.put(url, data=data, content_type='application/json')
+
+        assert list(user_profile.history.all()) == [screen_content]
+
+    def test_add_to_history_different_user_profile(self, client, faker, user_profile, user_profile_factory, screen_content):
+        data = {
+            'screen_content': {'title': screen_content.title}
+        }
+        different_user_profile = user_profile_factory()
+
+        client.force_login(user_profile.user)
+        url = reverse('user-profile-add-to-history', kwargs={'pk': different_user_profile.pk})
+        response = client.put(url, data=data, content_type='application/json')
+
+        assert list(different_user_profile.history.all()) == []
+
+
+    def test_add_to_history_screen_content_doesnt_exist(self, faker, client, user_profile, screen_content):
+        data = {
+            'screen_content': {'title': faker.name()}
+        }
+
+        client.force_login(user_profile.user)
+        url = reverse('user-profile-add-to-history', kwargs={'pk': user_profile.pk})
+        response = client.put(url, data=data, content_type='application/json')
+
+        assert response.status_code == 400
+        assert response.json() == {'screen_content': ['Invalid title, object does not exist']}
+
+
+
