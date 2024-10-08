@@ -29,3 +29,17 @@ class UserProfileViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
         serialier.is_valid(raise_exception=True)
         serialier.save()
         return response.Response(serialier.data)
+
+
+class RatingViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    queryset = models.Rating.objects.all()
+    serializer_class = serializers.RatingSerializer
+    permission_classes = []
+
+
+class BulkCreateRatings(views.APIView):
+    def put(self, request):
+        serializer = serializers.BulkRatingSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(serializer.data)

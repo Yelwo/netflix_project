@@ -1,4 +1,8 @@
+import random
+import string
+
 from rest_framework import serializers
+from rest_framework import fields
 
 from . import models
 
@@ -17,7 +21,7 @@ class ScreenContentSerializer(serializers.ModelSerializer):
 
 
 class CreateScreenCotentSerializer(serializers.Serializer):
-    title = serializers.CharField(max_length=30)
+    title = serializers.CharField(max_length=60)
     genres = GenreSerializer(many=True)
     type = serializers.ChoiceField([('TV Show', 'TV Show'),('Movie','Movie')], write_only=True)
 
@@ -52,3 +56,46 @@ class AddScreenContentToHistorySerializer(serializers.Serializer):
         except models.ScreenContent.DoesNotExist:
             raise serializers.ValidationError({'screen_content': ['Invalid title, object does not exist']})
         return attrs
+
+
+class CurrentUserProfileDefault:
+    requires_context = True
+
+    def __call__(self, serializer_field):
+        return serializer_field.context['request'].user.user_profile
+
+
+class RatingSerializer(serializers.ModelSerializer):
+    user_profile = serializers.HiddenField(default=CurrentUserProfileDefault())
+    content = serializers.PrimaryKeyRelatedField(queryset=models.ScreenContent.objects.all())
+
+    class Meta:
+        model = models.Rating
+        fields = ['content', 'rate', 'user_profile']
+
+
+class CreationIntegerField(fields.IntegerField):
+    def to_representation(self, value):
+        return super().to_representation(value.pk)
+
+
+class BulkRatingSerializer(serializers.ModelSerializer):
+    content = CreateScreenCotentSerializer()
+    user_profile = CreationIntegerField()
+
+    def create(self, validated_data):
+        content = CreateScreenCotentSerializer(data=validated_data.pop('content'))
+        content.is_valid()
+        content.save()
+        try:
+            user_profile = models.UserProfile.objects.get(pk=validated_data['user_profile'])
+        except models.UserProfile.DoesNotExist:
+            user = models.User.objects.create(username=''.join(random.choices(string.ascii_letters, k=8)))
+            user_profile = models.UserProfile.objects.create(pk=validated_data['user_profile'], user=user)
+
+        rating, _ = models.Rating.objects.get_or_create(rate=validated_data['rate'], user_profile=user_profile, content=content.instance)
+        return rating
+
+    class Meta:
+        model = models.Rating
+        fields = ['content', 'rate', 'user_profile']

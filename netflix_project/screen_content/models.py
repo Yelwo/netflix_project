@@ -17,16 +17,8 @@ class Genre(models.Model):
         
 
 class ScreenContent(PolymorphicModel):
-    title = models.CharField(max_length=30)
+    title = models.CharField(max_length=60)
     genres = models.ManyToManyField(Genre, verbose_name="content")
-
-    @abc.abstractmethod
-    def rate():
-        return NotImplemented
-
-    @abc.abstractmethod
-    def watch():
-        return NotImplemented
     
     def __str__(self) -> str:
         return self.title
@@ -51,10 +43,13 @@ class UserProfile(models.Model):
 class Rating(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     content = models.ForeignKey(ScreenContent, on_delete=models.CASCADE)
-    rate = models.IntegerField(null=False, validators=[
+    rate = models.FloatField(null=False, validators=[
         MaxValueValidator(10),
         MinValueValidator(1)
     ])
 
     def __str__(self) -> str:
-        return f"{self.user_profile} - {self.content} ({self.rate}) "
+        return f"{self.user_profile} - {self.content} ({self.rate})"
+
+    class Meta:
+        unique_together = ('user_profile', 'content')
